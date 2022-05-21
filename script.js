@@ -13,12 +13,12 @@ const authSigner = new ethers.Wallet(privatekeys[0], Provider)
 
 //LOOK HERE
 
-const address = "0xcA1D3A34bEbC97A7eEb02d0ae93A44b17Ccf6b5e" // just paste address in, make sure quotes still there
+const address = "0x7D4B1dA30d1282b59FeD50c4E2F53E82c4B29374" // just paste address in, make sure quotes still there
 const rawprice = "0" // price in eth
-const input1 = 2 //probably qty
-const input2 = null //put number as necessary, null otherwise
-const functionname = "mint"
-const maxprio = 3 // max priority fee in gwei
+const input1 = null //probably qty
+const input2 = null //put value as necessary, null otherwise
+const functionname = "mintRandom"
+const maxprio = 5 // max priority fee in gwei
 const maxfee = 150 // max fee in gwei
 
 // LOOK HERE
@@ -36,49 +36,46 @@ async function main() {
     let contract = new ethers.Contract(address,ABI,Provider)
     let price = String(ethers.utils.parseUnits(rawprice,"wei"));
     let bundle = []
+    let bundle2 = []
     for (let i = 0; i < privatekeys.length; ++i){
         let wallet = new ethers.Wallet(privatekeys[i],Provider)
         let transaction = null
         if (input2 !== null){
-            transaction = await contract.populateTransaction[functionname](input1,input2,{value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 150_000})
+            transaction = await contract.populateTransaction[functionname](input1,input2,{value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 200000})
             transaction.chainId = 1;
             transaction.maxFeePerGas = ethers.BigNumber.from(maxfee).mul(1e9)
             transaction.maxPriorityFeePerGas = ethers.BigNumber.from(maxprio).mul(1e9)
         }
         else if (input1 !== null){
-            transaction = await contract.populateTransaction[functionname](input1,{value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 150_000})
+            transaction = await contract.populateTransaction[functionname](input1,{value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 200000})
             transaction.chainId = 1;
             transaction.maxFeePerGas = ethers.BigNumber.from(maxfee).mul(1e9)
             transaction.maxPriorityFeePerGas = ethers.BigNumber.from(maxprio).mul(1e9)
         }
         else{
-            transaction = await contract.populateTransaction[functionname]({value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 150_000})
+            transaction = await contract.populateTransaction[functionname]({value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 200000})
             transaction.chainId = 1;
             transaction.maxFeePerGas = ethers.BigNumber.from(maxfee).mul(1e9)
             transaction.maxPriorityFeePerGas = ethers.BigNumber.from(maxprio).mul(1e9)
         }
-        let signedtxn = await wallet.signTransaction(transaction)
-        bundle.push({signedTransaction: signedtxn})
+        bundle.push({transaction: transaction, signer: wallet})
     }
-    console.log(bundle)
     
-    const targetBlockNumber = await Provider.getBlockNumber()
-    const minTimestamp = (await Provider.getBlock(targetBlockNumber)).timestamp
-    const maxTimestamp = minTimestamp + 120
-    const signedTransactions = await flashbotsProvider.signBundle(bundle)
-    //const simulation = await flashbotsProvider.simulate(signedTransactions, targetBlockNumber, targetBlockNumber + 1)
-    //console.log(JSON.stringify(simulation, null, 2))
+
+    let currentblock = await Provider.getBlockNumber();
+    for (let blockoffset = 1; blockoffset < 6; ++blockoffset ){
+        const targetBlockNumber = currentblock + blockoffset
+        const bundleReceipt = await flashbotsProvider.sendBundle(
+            bundle, // bundle we signed above
+            targetBlockNumber // block number at which this bundle is valid
+        )
+        console.log(await bundleReceipt.simulate())
+       
+    }
+    
 
     
-    const bundleReceipt = await flashbotsProvider.sendRawBundle(
-        signedTransactions, // bundle we signed above
-        targetBlockNumber, // block number at which this bundle is valid
-        {
-            minTimestamp, // optional minimum timestamp at which this bundle is valid (inclusive)
-            maxTimestamp // optional maximum timestamp at which this bundle is valid (inclusive)
-        }
-    )
-    console.log(bundleReceipt)
+    
 }
 
 main()
