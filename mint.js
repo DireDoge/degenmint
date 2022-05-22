@@ -13,30 +13,26 @@ const authSigner = new ethers.Wallet(privatekeys[0], Provider)
 
 //LOOK HERE
 
-const address = "0xE141BbADf09dEB18c3304887b0a88D7e87668b33" // just paste address in, make sure quotes still there
+const contractaddress = "0xE141BbADf09dEB18c3304887b0a88D7e87668b33" // just paste address in, make sure quotes still there
 const rawprice = "0" // price in eth
 const input1 = 10 //probably qty
 const input2 = null //put value as necessary, null otherwise
 const functionname = "mintByUser"
 const maxprio = 5 // max priority fee in gwei
-const maxfee = 50 // max fee in gwei
+const maxfee = 75 // max fee in gwei
 
 // LOOK HERE
 
 async function main() {
     const flashbotsProvider = await FlashbotsBundleProvider.create(Provider, authSigner)
-    // Flashbots provider requires passing in a standard provider and an auth signer
-    
-    
     var sourceresult = { ABI: "" }
-    await axios.get(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${address}&apikey=` + process.env.ETHERSCAN_KEY).then((res) => {
+    await axios.get(`https://api.etherscan.io/api?module=contract&action=getsourcecode&address=${contractaddress}&apikey=` + process.env.ETHERSCAN_KEY).then((res) => {
         sourceresult = res["data"]["result"][0]
     });
     const ABI = sourceresult["ABI"]
-    let contract = new ethers.Contract(address,ABI,Provider)
+    let contract = new ethers.Contract(contractaddress,ABI,Provider)
     let price = String(ethers.utils.parseUnits(rawprice,"wei"));
     let bundle = []
-    let bundle2 = []
     for (let i = 0; i < privatekeys.length; ++i){
         let wallet = new ethers.Wallet(privatekeys[i],Provider)
         let transaction = null
@@ -60,8 +56,6 @@ async function main() {
         }
         bundle.push({transaction: transaction, signer: wallet})
     }
-    
-
     let currentblock = await Provider.getBlockNumber();
     for (let blockoffset = 1; blockoffset < 6; ++blockoffset ){
         const targetBlockNumber = currentblock + blockoffset
@@ -69,13 +63,8 @@ async function main() {
             bundle, // bundle we signed above
             targetBlockNumber // block number at which this bundle is valid
         )
-        console.log(await bundleReceipt.simulate())
-       
+        console.log(await bundleReceipt.simulate())  
     }
-    
-
-    
-    
 }
 
 main()
