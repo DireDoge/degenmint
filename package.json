@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@alch/alchemy-web3": "^1.4.2",
     "@flashbots/ethers-provider-bundle": "^0.4.3",
     "axios": "^0.27.2",
     "dotenv": "^16.0.1",

@@ -13,13 +13,13 @@ const authSigner = new ethers.Wallet(privatekeys[0], Provider)
 
 //LOOK HERE
 
-const address = "0x7D4B1dA30d1282b59FeD50c4E2F53E82c4B29374" // just paste address in, make sure quotes still there
+const address = "0xE141BbADf09dEB18c3304887b0a88D7e87668b33" // just paste address in, make sure quotes still there
 const rawprice = "0" // price in eth
-const input1 = null //probably qty
+const input1 = 10 //probably qty
 const input2 = null //put value as necessary, null otherwise
-const functionname = "mintRandom"
+const functionname = "mintByUser"
 const maxprio = 5 // max priority fee in gwei
-const maxfee = 150 // max fee in gwei
+const maxfee = 50 // max fee in gwei
 
 // LOOK HERE
 
@@ -47,7 +47,7 @@ async function main() {
             transaction.maxPriorityFeePerGas = ethers.BigNumber.from(maxprio).mul(1e9)
         }
         else if (input1 !== null){
-            transaction = await contract.populateTransaction[functionname](input1,{value: price, type:2, nonce: await wallet.getTransactionCount(),gasLimit: 200000})
+            transaction = await contract.populateTransaction[functionname](input1,{ type:2, nonce: await wallet.getTransactionCount(),gasLimit: 500000})
             transaction.chainId = 1;
             transaction.maxFeePerGas = ethers.BigNumber.from(maxfee).mul(1e9)
             transaction.maxPriorityFeePerGas = ethers.BigNumber.from(maxprio).mul(1e9)
